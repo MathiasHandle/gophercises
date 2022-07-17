@@ -33,36 +33,50 @@ func exit(msg string) {
 	os.Exit(1)
 }
 
-// Asks questions and returns total questions count and correct answers.
-func askQuestions(records [][]string) (totalQ, correctA int) {
-	totalQuestions := len(records)
+type problem struct {
+	question string
+	answer   string
+}
+
+// Parses records and returns []problem
+func getProblems(records [][]string) []problem {
+	problems := make([]problem, len(records))
+
+	for i, line := range records {
+		problems[i] = problem{
+			question: line[0],
+			answer:   line[1],
+		}
+	}
+
+	return problems
+}
+
+// Asks a question and validates user intput.
+func askQuestions(problems []problem) {
 	var correctAnswers int
 
-	for i, record := range records {
-		question := record[0]
-		answer := record[1]
-
-		fmt.Printf("\n\nQuestion %v/%v\n", i+1, totalQuestions)
+	for i, problem := range problems {
+		fmt.Printf("Problem #%d: %v = \n", i+1, problem.question)
 
 		var userInput string
-		fmt.Printf("What is %s ?\n", question)
 		_, err := fmt.Scanln(&userInput)
 		if err != nil {
 			fmt.Println("Error scanning answer from user: ", err)
 		}
 
-		if userInput == answer {
-			correctAnswers += 1
+		if userInput == problem.answer {
+			correctAnswers++
 		}
 	}
 
-	return totalQuestions, correctAnswers
+	fmt.Printf("%v correct answers out of %v total", correctAnswers, len(problems))
 }
 
 func main() {
 	records := getRecords()
 
-	totalQuestions, correctAnswers := askQuestions(records)
+	problems := getProblems(records)
 
-	fmt.Printf("%v correct answers out of %v total questions asked", correctAnswers, totalQuestions)
+	askQuestions(problems)
 }
