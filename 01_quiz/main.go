@@ -5,16 +5,15 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 )
 
 // Loads csv file and returns records from it
-func getRecords() [][]string {
-	csvFilename := flag.String("csv", "problems.csv", "csv file in the format of 'question,answer'")
-	flag.Parse()
+func getRecords(csvFlag *string, timerFlag *int) [][]string {
 
-	file, err := os.Open(*csvFilename)
+	file, err := os.Open(*csvFlag)
 	if err != nil {
-		exit(fmt.Sprintf("Error reading a csv file: %s\n", *csvFilename))
+		exit(fmt.Sprintf("Error reading a csv file: %s\n", *csvFlag))
 	}
 
 	reader := csv.NewReader(file)
@@ -53,20 +52,28 @@ func getProblems(records [][]string) []problem {
 }
 
 // Asks a question and validates user intput.
-func askQuestions(problems []problem) {
+func askQuestions(problems []problem, timer *time.Timer) {
 	var correctAnswers int
 
 	for i, problem := range problems {
 		fmt.Printf("Problem #%d: %v = \n", i+1, problem.question)
 
-		var userInput string
-		_, err := fmt.Scanln(&userInput)
-		if err != nil {
-			fmt.Println("Error scanning answer from user: ", err)
-		}
+		answerChan := make(chan string)
+		go func() {
+			var userInput string
+			fmt.Scanln(&userInput)
+			answerChan <- userInput
+		}()
 
-		if userInput == problem.answer {
-			correctAnswers++
+		select {
+		case <-timer.C:
+			fmt.Printf("%v correct answers out of %v total", correctAnswers, len(problems))
+			return
+
+		case answer := <-answerChan:
+			if answer == problem.answer {
+				correctAnswers++
+			}
 		}
 	}
 
@@ -74,9 +81,15 @@ func askQuestions(problems []problem) {
 }
 
 func main() {
-	records := getRecords()
+	csvFilename := flag.String("csv", "problems.csv", "csv file in the format of 'question,answer'")
+	timeLimit := flag.Int("limit", 30, "this is time limit for quiz in seconds")
+	flag.Parse()
+
+	records := getRecords(csvFilename, timeLimit)
 
 	problems := getProblems(records)
 
-	askQuestions(problems)
+	timer := time.NewTimer(time.Duration(*timeLimit) * time.Second)
+
+	askQuestions(problems, timer)
 }
