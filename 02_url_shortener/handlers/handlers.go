@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
+
+	"gopkg.in/yaml.v3"
 )
 
 // MapHandler will return an http.HandlerFunc (which also
@@ -11,8 +14,18 @@ import (
 // If the path is not provided in the map, then the fallback
 // http.Handler will be called instead.
 func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.HandlerFunc {
-	//	TODO: Implement this...
-	return nil
+	return func(w http.ResponseWriter, r *http.Request) {
+		//if path can be matched
+		path := r.URL.Path
+
+		if dest, ok := pathsToUrls[path]; ok {
+			http.Redirect(w, r, dest, http.StatusFound)
+			return
+		}
+
+		//else
+		fallback.ServeHTTP(w, r)
+	}
 }
 
 // YAMLHandler will parse the provided YAML and then return
@@ -31,7 +44,30 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 //
 // See MapHandler to create a similar http.HandlerFunc via
 // a mapping of paths to urls.
+type pathUrl struct {
+	Path string `yaml:"path"`
+	URL  string `yaml:"url"`
+}
+
 func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
-	// TODO: Implement this...
-	return nil, nil
+	// parse yaml
+	var parsedYml []pathUrl
+	err := yaml.Unmarshal(yml, &parsedYml)
+	if err != nil {
+		fmt.Printf("Error pasing yml: %s\n", err)
+	}
+
+	fmt.Println("parsed YAML: ", parsedYml)
+
+	// convert yaml arr to map
+	pathsToUrls := make(map[string]string)
+	for _, pu := range parsedYml {
+		pathsToUrls[pu.Path] = pu.URL
+	}
+
+	fmt.Println(pathsToUrls)
+
+	// return map handler using the map
+	return MapHandler(pathsToUrls, fallback), nil
+
 }
