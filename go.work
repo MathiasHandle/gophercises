@@ -3,4 +3,5 @@ go 1.18
 use (
 	./01_quiz
 	./02_url_shortener
+	./03_book_adventure
 )
