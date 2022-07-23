@@ -15,14 +15,14 @@ type chapter struct {
 	} `json:"options"`
 }
 
-func ParseJSON(filePath string) map[string]chapter {
-	file, err := os.ReadFile(filePath)
-	if err != nil {
-		fmt.Printf("Error opening file: %s", err)
-	}
+type Story map[string]chapter
 
-	var jsonData map[string]chapter
-	err = json.Unmarshal(file, &jsonData)
+// Parses JSON file to a struct
+func ParseJSON(file *os.File) Story {
+	d := json.NewDecoder(file)
+
+	var jsonData Story
+	err := d.Decode(&jsonData)
 	if err != nil {
 		fmt.Printf("Error parsing json data: %s", err)
 	}
