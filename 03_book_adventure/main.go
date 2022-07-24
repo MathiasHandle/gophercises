@@ -21,7 +21,19 @@ func main() {
 	}
 	s := story.ParseJSON(f)
 
+	// tpl := template.Must(template.New("").Parse("hello"))
 	h := story.NewHandler(s)
 	fmt.Printf("Starting the server at: %d\n", *port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), h))
 }
+
+/* func pathFn(r *http.Request) string {
+	path := strings.TrimSpace(r.URL.Path)
+
+	if path == "/story" || path == "/story/" {
+		path = "/story/intro"
+	}
+	path = path[1:]
+
+	return path[len("/story/"):]
+} */
