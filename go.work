@@ -5,4 +5,5 @@ use (
 	./02_url_shortener
 	./03_book_adventure
 	./04_html_parser
+	./05_sitemap
 )
